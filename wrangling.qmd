@@ -1,0 +1,379 @@
+---
+title: "Data wrangling"
+format: pdf
+author: BADJO Dibé
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(dslabs)
+```
+
+```{r}
+path <- system.file("extdata", package = "dslabs")
+print(path)
+filename <- file.path(path, "fertility-two-countries-example.csv")
+wide_data <- read_csv(filename)
+```
+
+```{r}
+view(wide_data)
+wide_data %>% gather(year, fertility, '1960':'2015')
+```
+
+```{r}
+head(wide_data)
+```
+
+```{r}
+new_tidy_data <- wide_data %>% gather(year, fertility, -country, convert = TRUE)
+head(new_tidy_data)
+```
+
+```{r}
+new_wide_data <- new_tidy_data %>% spread(year, fertility)
+select(new_wide_data, country, '1960':'1967')
+```
+
+```{r}
+filename_ <- file.path(path, "life-expectancy-and-fertility-two-countries-example.csv")
+raw_data <- read_csv(filename_)
+select(raw_data, 1:6)
+```
+
+```{r}
+dat <- raw_data %>% gather(key, value, -country)
+head(dat)
+dat %>% separate(key, c('year', 'variable_name'),'_')
+
+dat %>% separate(key, c('year','first_variable_name', 'second_variable_name'), fill = 'right')
+
+dat %>% separate(key, c('year', 'variable_name'), extra = 'merge')
+dat %>% separate(key, c('year', 'variable_name'), extra = 'merge') %>% spread(variable_name, value)
+```
+
+```{r}
+library(tidyselect)
+library(dslabs)
+data(murders)
+head(murders)
+```
+
+```{r}
+data("polls_us_election_2016")
+head(results_us_election_2016)
+```
+
+```{r}
+library(dplyr)
+new_tab <- left_join(murders, results_us_election_2016, by = "state") %>% select(-others)
+head(new_tab)
+```
+
+```{r}
+tab1 <- slice(murders, 1:6) %>% select(state, population)
+tab2 <- results_us_election_2016 %>% filter(state %in%
+c("Alabama","Alaska","Arizona", "California", "Connecticut", "Delaware")) %>% select(state,electoral_votes)
+```
+
+```{r}
+left_join(tab1, tab2, by = "state")
+
+```
+
+```{r}
+right_join(tab1, tab2, by = "state")
+```
+
+```{r}
+inner_join(tab1, tab2 , by = "state")
+
+```
+
+```{r}
+full_join(tab1, tab2, by = "state")
+
+```
+
+```{r}
+bind_cols(a = 1:9, b = 4:12)
+```
+
+```{r}
+a <- 1:20
+b <- 13:30
+intersect(a,b)
+```
+
+```{r}
+union(a, b)
+```
+
+```{r}
+tab1 <- new_tab[1:5, ]
+tab2 <- new_tab[3:7,] 
+setdiff(tab1, tab2)
+```
+
+```{r}
+install.packages("Lahman")
+library(Lahman)
+data("Batting")
+head(Batting)
+```
+
+```{r}
+Batting %>% filter(yearID == "2016") %>% arrange(desc(HR)) %>% slice(1:10)
+```
+
+```{r}
+class(reported_heights$height)
+```
+
+```{r}
+x <- as.numeric(reported_heights$height)
+head(x)
+
+```
+
+```{r}
+reported_heights %>% mutate(new_height = as.numeric(height)) %>% filter(is.na(new_height)) %>% head(12)
+
+```
+
+```{r}
+not_inches <- function(x, smallest = 50, tallest = 84){
+  inches <- suppressWarnings(as.numeric(x))
+  ind <- is.na(inches) |inches < smallest | inches > tallest
+  ind
+  }
+```
+
+```{r}
+problems <- reported_heights %>% filter(not_inches(height)) %>% pull(height)
+problems
+```
+
+```{r}
+yes <- c("180 cm", "70 inches")
+no <- c("180", "70''")
+s <- c(yes, no)
+str_detect(s, "cm|inches")
+```
+
+```{r}
+yes <- c("5", "6", "5'10", "5 feet", "4'11")
+no <- c(" ", ".", "Five", "Six")
+s <- c(yes, no)
+pattern <- "\\d"
+str_detect(s,pattern = pattern )
+```
+
+```{r}
+pattern <- "^\\d{1,2}$"
+yes <- c("1", "5", "9", "12")
+no <- c("123", "a4", "b") 
+str_view(c(yes, no), pattern)
+```
+
+```{r}
+pattern <- "^[4-7]'\\d{1,2}\"$"
+yes <- c("5'7\"", "6'2\"", "5'12\"")
+no <- c("6,2\"", "6.2\"","I am 5'11\"", "3'2\"", "64")
+s <- c(yes, no)
+str_detect(s, pattern)
+```
+
+```{r}
+pattern_2 <- "^[4-7]'\\s\\d{1,2}\"$"
+str_subset(problems, pattern_2)
+```
+
+```{r}
+yes <- c("AB", "A1B", "A11B", "A111B", "A1111B") 
+no <- c("A2B", "A21B")
+s <- c(yes,no)
+str_detect(s, "A1*B")
+```
+
+```{r}
+pattern_with_groups <-  "^([4-7]),(\\d*)$"
+yes <- c("5,9", "5,11", "6,", "6,1")
+no <- c("5'9", ",", "2,8", "6.1.1")
+s <- c(yes, no)
+str_detect(s, pattern_with_groups)
+```
+
+```{r}
+str_match(s, pattern_with_groups)
+
+```
+
+```{r}
+pattern <- "^[4-7]'\\d{1,2}\"$"
+sum(str_detect(problems, pattern))
+```
+
+```{r}
+problems[c(2, 10, 11, 12, 15)] %>% str_view(pattern)
+
+```
+
+```{r}
+str_subset(problems, "inches")
+```
+
+```{r}
+str_subset(problems, "''")
+```
+
+```{r}
+pattern <- "^[4-7]'\\d{1,2}$"
+problems %>% str_replace("feet|ft|foot", "'") %>% str_replace("inches|in|''|\"", "") %>% str_detect(pattern) %>% sum()
+```
+
+```{r}
+pattern <- "^[4-7]\\s*'\\s*\\d{1,2}$"
+problems %>% str_replace("feet|ft|foot", "'") %>% str_replace("inches|in|''|\"", "") %>% str_detect(pattern) %>% sum()
+```
+
+```{r}
+pattern_with_groups <- "^([4-7]),(\\d*)$"
+yes <- c("5,9", "5,11", "6,", "6,1")
+no <- c("5'9", ",", "2,8", "6.1.1")
+s <- c(yes, no)
+str_replace(s, pattern_with_groups, "\\1'\\2")
+```
+
+```{r}
+pattern_with_groups <-"^([4-7])\\s*[,\\.\\s+]\\s*(\\d*)$"
+str_subset(problems, pattern_with_groups) %>% head()
+```
+
+```{r}
+str_subset(problems, pattern_with_groups) %>%  str_replace( pattern_with_groups,  "\\1'\\2" ) %>% head()
+
+```
+
+```{r}
+not_inches_or_cm <- function(x, smallest = 50, tallest = 84){
+    inches <- suppressWarnings(as.numeric(x))
+    ind <- !is.na(inches) & ((inches >= smallest & inches <= tallest) | (inches/2.54 >= smallest & inches/2.54 <= tallest))
+    !ind
+    }
+```
+
+```{r}
+problems <- reported_heights %>% filter(not_inches_or_cm(height)) %>% pull(height)
+length(problems)
+```
+
+```{r}
+converted <- problems %>% str_replace("feet|foot|ft", "'") %>% str_replace("inches|in|''|\"", "") %>% str_replace("^([4-7])\\s*[,\\.\\s+]\\s*(\\d*)$", "\\1'\\2")
+pattern <- "^[4-7]\\s*'\\s*\\d{1,2}$"
+index <- str_detect(converted, pattern)
+mean(index)
+```
+
+```{r}
+converted[index]
+
+```
+
+```{r}
+converted[!index]
+```
+
+```{r}
+yes <- c("5", "6", "5")
+no <- c("5'", "5''", "5'4")
+s <- c(yes, no)
+str_replace(s, "^([4-7])$", "\\1'0")
+```
+
+```{r}
+pattern <- "^[4-7]\\s*'\\s*(\\d+\\.?\\d*)$"
+yes <- c("1,7", "1, 8", "2, " )
+no <- c("5,8", "5,3,2", "1.7")
+s <- c(yes, no)
+
+str_replace(s, "^([12])\\s*,\\s*(\\d*)$", "\\1\\.\\2")
+```
+
+```{r}
+s <- "Hi "
+print(cat(s))
+identical(s, "Hi")
+```
+
+```{r}
+convert_format <- function(s){
+  s %>% str_replace("feet|feet|ft", "'") %>%
+    str_replace_all("inches|in|''|\"|cm|and", "") %>%   str_replace("^([4-7])\\s*[,\\.\\s+]\\s*(\\d*)$", "\\1'\\2") %>% str_replace("^([56])'?$", "\\1'0") %>% str_replace("^([12])\\s*,\\s*(\\d*)$","\\1\\.\\2") %>% str_trim()
+  }
+```
+
+```{r}
+word_to_numbers <- function(s){
+  str_to_lower(s) %>%  str_replace_all("zero", "0") %>%
+    str_replace_all("one", "1") %>%
+    str_replace_all("two", "2") %>%
+    str_replace_all("three", "3") %>%
+    str_replace_all("four", "4") %>%
+    str_replace_all("five", "5") %>%
+    str_replace_all("six", "6") %>%
+    str_replace_all("seven", "7") %>%
+    str_replace_all("eight", "8") %>%
+    str_replace_all("nine", "9") %>%
+    str_replace_all("ten", "10") %>%
+    str_replace_all("eleven", "11")
+}
+```
+
+```{r}
+converted <- problems %>% convert_format() %>% word_to_numbers()
+remaining_problems <- converted[not_inches_or_cm(converted)]
+pattern <- "^[4-7]\\s*'\\s*\\d+\\.?\\d*$"
+index <- str_detect(remaining_problems, pattern)
+remaining_problems[!index]
+```
+
+```{r}
+library(tidyr)
+s <- c("5'10", "6'1")
+tab <- data.frame(x = s)
+```
+
+```{r}
+tab %>% separate(x, c("feet", "inches"), sep = "'")
+
+```
+
+```{r}
+tab %>% extract(x, c("feet", "inches"), regex = "(\\d)'(\\d{1,2})")
+
+```
+
+```{r}
+s <- c("5'10", "6'1\"", "5'8inches")
+tab <- data.frame(x = s)
+tab %>% separate(x, c("feet", "inches"), sep = "'", fill = "right")
+```
+
+```{r}
+tab %>% extract(x, c("feet", "inches"), regex = "(\\d)'(\\d{1,2})")
+
+```
+
+```{r}
+smallest <- 50
+tallest <- 84
+pattern <- "^([4-7])\\s*'\\s*(\\d+\\.?\\d*)$"
+new_height <- reported_heights %>% mutate(original = height, height = word_to_numbers(height) %>% convert_format()) %>% extract(height, c("feet", "inches"), regex = pattern, remove = FALSE) %>% mutate_at(c("height", "feet", "inches"), as.numeric) %>% mutate(guess = 12*feet + inches) %>% mutate(height = case_when(
+  !is.na(height) & between(height, smallest, tallest) ~ height,
+  !is.na(height) & between(height/2.54, smallest, tallest) ~ height/2.54,
+  !is.na(height) & between(height*100/2.54, smallest, tallest) ~ height*100/2.54,
+  !is.na(guess) & inches < 12 & between(guess, smallest, tallest) ~ guess,
+  TRUE ~ as.numeric(NA))) %>% select(-guess)
+```
